@@ -55,6 +55,8 @@ def get_user_info(user_id, vk_user):
 
 
 def search_users_info(criteria, search_count=10):
+    """Функция предназначена для поиска потенциальных
+    партнеров по критериям заданным в get_user_info"""
     user_city = criteria.get('city')
     user_sex = criteria.get('gender')
     min_age = criteria.get('age').get('min')
@@ -87,4 +89,25 @@ def search_users_info(criteria, search_count=10):
         ])
     return result
 
+def get_top_three_photos(user_id, vk_user):
+    """Функция получения трех фотографий пользователя с наибольшим количеством лайков"""
+    # Получаем все фотографии из альбома профиля
+    photos = vk_user.photos.get(owner_id=user_id, album_id='profile')
 
+    # Создаём словарь для хранения фотографий с их количеством лайков
+    photos_likes = {}
+
+    # Проходимся по всем фотографиям и считаем количество лайков
+    for photo in photos['items']:
+        photo_id = photo['id']
+        likes_info = vk_user.likes.getList(type='photo', owner_id=user_id, item_id=photo_id)
+        likes_count = likes_info['count']
+        # кортеж с photo_id в качестве ключа вместо всего словаря фотографий
+        photos_likes[(photo_id)] = likes_count
+
+    # Сортируем фотографии по количеству лайков и возвращаем первые три
+    sorted_photos = sorted(photos_likes.items(), key=lambda x: x[1], reverse=True)
+    # Use int() to convert strings to integers
+    top_three_photos = [(int(user_id), int(photo_id)) for photo_id, _ in sorted_photos[:3]]
+    
+    return top_three_photos

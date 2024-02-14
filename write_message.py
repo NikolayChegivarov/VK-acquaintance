@@ -4,7 +4,7 @@ def write_message(vk_session, user_id, message, attachments=None, keyboard=None)
     # Обработка отсутствия вложений.
     attachments = attachments or []
     # Преобразовать список вложений в строку, разделенную запятыми.
-    attachments_str = ','.join(map(str, attachments))
+    attachments_str = ','.join(f'photo{a[0]}_{a[1]}' for a in attachments)
     # Обработка отсутствия клавиатуры в сообщении.
     if keyboard is not None:
         keyboard_json = keyboard.get_keyboard()
