@@ -20,10 +20,11 @@ vk_user = vk_user_session.get_api()
 
 # Инициализируем длинный опрос бота с идентификатором нашей группы.
 longpoll = VkBotLongPoll(vk_session, wait=25, group_id=GROUP_ID)
+# попробую
+
 # Для отправки изображений
 upload = VkUpload(vk_session)
-# Задаем путь к изображению
-image = 'C:/Users/1/Pictures/z3qBD0NOO-8.jpg'
+
 # создаем экземпляр класса Buttons
 buttons_instance = Buttons(one_time=True)
 
@@ -32,16 +33,21 @@ for event in longpoll.listen():
     if event.type == VkBotEventType.MESSAGE_NEW:
         # вывожу всю информацию которая есть в событии, для дальнейшего анализа.
         # pp(event)
+
         # Получаем текст сообщения
         message_text = event.object.text
+
         # Получаем id отправителя
         sender = event.object.get('from_id')
+
+        peer_id = event.object.get('peer_id')
+
         # вложения
         # attachments = []
         # upload_image = upload.photo_messages(photos=image)[0]
         # attachments.append('photo{}_{}'.format(upload_image['owner_id'], upload_image['id']))
-        # устанавливаем критерии поиска исходя из критериев пользователя
 
+        # устанавливаем критерии поиска исходя из критериев пользователя
         criteria = get_user_info(sender, vk_user)
 
         # ОБРАБОТКА СОБЫТИЙ.
@@ -53,11 +59,15 @@ for event in longpoll.listen():
             # print(len(list_of_potential))
             # pp(list_of_potential)
             for pipl in list_of_potential:
-                print()
-                print(pipl[2])
+                # print()
+                # print(pipl[2])
                 photos = get_top_three_photos(pipl[2], vk_user)
                 pp(photos)
-                write_message(vk_session, sender, f'{pipl[0]}.{pipl[1]}.', attachments=photos)
+                # photos_ = ['photo106769130_281247682']
+                write_message(vk_session, peer_id, f'{pipl[0]}.{pipl[1]}.', attachments=photos)
+
+                buttons_instance.button_SAVE_NEXT_LIST(vk_session, sender)
+                break
                 # ['Лена Субботина', 'https://vk.com/id136308574', '136308574'],
                 # 2 У тех людей, которые подошли под критерии поиска, получить три самые популярные фотографии в профиле.
                 # Популярность определяется по количеству лайков.
@@ -68,10 +78,8 @@ for event in longpoll.listen():
                 # - три фотографии в виде attachment(https://dev.vk.com/method/messages.send).
                 # Должна быть возможность перейти к следующему человеку с помощью команды или кнопки.
                 # ИЛИ сохранить пользователя в список избранных.
-                buttons_instance.button_SAVE_NEXT_LIST(vk_session, sender)
-                break
         elif message_text == 'SAVE':
-            # Сохранить ID пользователя в список избранных.
+            # Сохранить ID пользователя в список избранных.f'{pipl[0]}.{pipl[1]}{pipl[2]}
             buttons_instance.button_SAVE_NEXT_LIST(vk_session, sender)
             pass
         elif message_text == 'NEXT':

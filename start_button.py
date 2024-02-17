@@ -24,7 +24,7 @@ class Buttons:
         keyboard.add_button('SAVE', color=VkKeyboardColor.POSITIVE)  # Зелёная
         keyboard.add_button('NEXT', color=VkKeyboardColor.PRIMARY)  # Синяя
         keyboard.add_button('LIST', color=VkKeyboardColor.SECONDARY)  # Белая
-        self.set_message_text("Если хочешь добавить человека в список избранных нажми 'SAVE'. Если хочешь перейти к следующему человеку, нажми 'NEXT'.")
+        self.set_message_text("Если хочешь добавить человека в список избранных нажми 'SAVE'. Если хочешь перейти к следующему человеку, нажми 'NEXT'. Если хочешь вывести список избранных нажми 'LIST'.")
         self.send_message(vk_session, user_id, keyboard)
 
     def send_message(self, vk_session, user_id, keyboard):

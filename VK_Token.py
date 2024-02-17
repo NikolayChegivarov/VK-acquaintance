@@ -22,5 +22,5 @@ params = {
 oauth_url = f'{OAUTH_BASE_URL}?{urlencode(params)}'
 print(oauth_url)
 
-token = 'vk1.a.Vgk04pxzPWhKyJtMPQWqukH1TI-x0gYLsEjcuzZT9xkRTYEJc_Fw64VKk0rYFMbz530AM07qujbeuLs44dIAs_BASzsM8mqpv5Ur3JZ4cg8-xa0e2KOmmBXjM9UBSRa4OftJUW804X_YMMtTIAZJT4mMNXLrLieXG52QY5wSl8-hJxM-Sh6cx3FANFBPISA5'
+
 

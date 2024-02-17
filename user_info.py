@@ -2,7 +2,7 @@ from params import user_token
 import requests
 URL = 'https://api.vk.com/method/'
 from datetime import datetime, timedelta
-
+from pprint import pprint as pp
 
 def get_city_id_by_name(city_name, vk_user):
     """Функция переводит название города в его цифровой артикул"""
@@ -18,7 +18,6 @@ def change_of_date(date_string, years):
     date_obj = datetime.strptime(date_string, date_format)
     new_date_obj = date_obj + timedelta(days=365*years)
     return new_date_obj.strftime(date_format)
-
 
 def get_user_info(user_id, vk_user):
     """Функция предназначена находить данные у пользователя
@@ -52,7 +51,6 @@ def get_user_info(user_id, vk_user):
         match_criteria = 'что то пошло не так в функции get_user_info'
         return match_criteria
     return result
-
 
 def search_users_info(criteria, search_count=10):
     """Функция предназначена для поиска потенциальных
@@ -99,15 +97,19 @@ def get_top_three_photos(user_id, vk_user):
 
     # Проходимся по всем фотографиям и считаем количество лайков
     for photo in photos['items']:
+        pp(photo)
         photo_id = photo['id']
-        likes_info = vk_user.likes.getList(type='photo', owner_id=user_id, item_id=photo_id)
+        owner_id = photo['owner_id']
+        likes_info = vk_user.likes.getList(type='photo', owner_id=owner_id, item_id=photo_id)
         likes_count = likes_info['count']
         # кортеж с photo_id в качестве ключа вместо всего словаря фотографий
         photos_likes[(photo_id)] = likes_count
 
-    # Сортируем фотографии по количеству лайков и возвращаем первые три
-    sorted_photos = sorted(photos_likes.items(), key=lambda x: x[1], reverse=True)
-    # Use int() to convert strings to integers
-    top_three_photos = [(int(user_id), int(photo_id)) for photo_id, _ in sorted_photos[:3]]
+        # Сортируем фотографии по количеству лайков и возвращаем первые три
+        sorted_photos = sorted(photos_likes.items(), key=lambda x: x[1], reverse=True)
+        # Правильно форматируем строки для вложений
+        top_three_photos = ['photo{}_{}'.format(owner_id, photo_id) for photo_id, _ in sorted_photos[:3]]
+
     
     return top_three_photos
+
