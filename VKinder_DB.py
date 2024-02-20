@@ -12,7 +12,6 @@ class User(Base):
     def __str__(self):
         return f'id: {self.id}, user_id: {self.user_id}'
 
-
 class Favorite_users(Base):
     __tablename__ = 'favorite_users'
     id = sq.Column(sq.Integer, primary_key=True)

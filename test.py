@@ -7,7 +7,7 @@ from config import TOKEN, GROUP_ID, user_token
 from user_info import get_user_info, search_users_info, get_top_three_photos, get_next_pipl
 from start_button import Buttons
 from write_message import write_message
-from VKinder_DB import *
+from bd import *
 
 # Создаем сеанс с токеном бота.
 vk_session = vk_api.VkApi(token=TOKEN)

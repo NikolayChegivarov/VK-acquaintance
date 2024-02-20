@@ -1,4 +1,4 @@
-from params import user_token
+from config import user_token
 import requests
 URL = 'https://api.vk.com/method/'
 from datetime import datetime, timedelta
@@ -75,29 +75,33 @@ def search_users_info(criteria, search_count=10):
         'has_photo': 1,
         'verified': 1,
         'is_closed': True,
-        'birth_date': f"{min_age}-{max_age}",  # Assuming birth_date format is YYYY-MM-DD
+        'birth_date': f"{min_age}-{max_age}",
         'fields': 'bdate, sex, city',
     }
     response = requests.get(URL + method, params=params)
     result = []
+    counter = 1
     for item in response.json()['response']['items']:
         result.append([
             item['first_name'] + ' ' + item['last_name'],
-            'https://vk.com/id' + str(item['id']), str(item['id'])
+            'https://vk.com/id' + str(item['id']),
+            str(item['id']),
+            str(counter)
         ])
+        counter += 1
     return result
 
 def get_top_three_photos(user_id, vk_user):
     """Функция получения трех фотографий пользователя с наибольшим количеством лайков"""
+
     # Получаем все фотографии из альбома профиля
     photos = vk_user.photos.get(owner_id=user_id, album_id='profile')
-
     # Создаём словарь для хранения фотографий с их количеством лайков
     photos_likes = {}
 
     # Проходимся по всем фотографиям и считаем количество лайков
     for photo in photos['items']:
-        pp(photo)
+        # pp(photo)
         photo_id = photo['id']
         owner_id = photo['owner_id']
         likes_info = vk_user.likes.getList(type='photo', owner_id=owner_id, item_id=photo_id)
@@ -109,7 +113,12 @@ def get_top_three_photos(user_id, vk_user):
         sorted_photos = sorted(photos_likes.items(), key=lambda x: x[1], reverse=True)
         # Правильно форматируем строки для вложений
         top_three_photos = ['photo{}_{}'.format(owner_id, photo_id) for photo_id, _ in sorted_photos[:3]]
-
-    
     return top_three_photos
+
+def get_next_pipl(pipl, list_of_potential):
+    current_index = list_of_potential.index(pipl)
+    if current_index + 1 < len(list_of_potential):
+        return list_of_potential[current_index + 1]
+    else:
+        return None
 
