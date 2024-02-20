@@ -19,10 +19,10 @@ def test_connection(session):
         with session.bind.connect() as connection:
             result = connection.execute(text("SELECT version();"))
             version = result.scalar()
-            print(f"Database version: {version}")
+            print(f"Версия базы данных: {version}")
             return True
     except Exception as e:
-        print(f"Connection test failed: {e}")
+        print(f"Проверка соединения не удалась: {e}")
         return False
 test_connection(session)
 
@@ -34,7 +34,7 @@ def create_schema(session, schema_name):
             session.commit()
             print('Создается схема.')
     except Exception as e:
-        print(f"Error creating schema: {e}")
+        print(f"Ошибка создания схемы: {e}")
     finally:
         session.close()
 
@@ -51,7 +51,7 @@ def create_tables(session):
         session.commit()
         print('Стираем таблицы если есть, создаем новые.')
     except Exception as e:
-        print(f"Error creating tables: {e}")
+        print(f"Ошибка создания таблиц: {e}")
         raise
     finally:
         session.close()
@@ -76,7 +76,7 @@ def add_all(session, list_of_potential):
             session.add(favorite_user_data)
             session.commit()
         except Exception as e:
-            print(f"An error occurred: {e}")
+            print(f"Произошла ошибка: {e}")
             session.rollback()
         finally:
             session.close()
@@ -92,7 +92,7 @@ def add_favorite_user(session, pipl):
         session.add(favorite_user_data)
         session.commit()
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"Произошла ошибка: {e}")
         session.rollback()
     finally:
         session.close()
@@ -107,7 +107,7 @@ def add_black_list(session, pipl):
         session.add(black_list_user_data)
         session.commit()
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"Произошла ошибка: {e}")
         session.rollback()
     finally:
         session.close()
@@ -115,10 +115,25 @@ def add_black_list(session, pipl):
 def view_favorites_users(session, user_id):
     """Просмотр избранных пользователей."""
     print('Вывели список.')
-    results = session.query(Favorite_users).filter(Favorite_users.vk_user == user_id).all()
+    results = session.query(Favorite_users, Users).join(Users, Favorite_users.vk_id == Users.vk_id).filter(Users.user_id == user_id).all()
+    print(results)
     result = []
-    for res in results:
-        result.append([res.name, res.link, res.vk_user])
-    session.commit()
-    session.close()
-    return result
+    for res, user in results:
+        result.append([user.name, user.link, user.vk_id])
+    print(result)
+    # Форматируем результат в строку
+    if result:
+        formatted_result = '\n'.join(f"{name} - {link}" for name, link, vk_id in result)
+        session.commit()
+        session.close()
+        return f"Ваши избранные:\n{formatted_result}"
+    else:
+        session.commit()
+        session.close()
+        return "Ваш список избранных пуст."
+
+
+
+
+
+

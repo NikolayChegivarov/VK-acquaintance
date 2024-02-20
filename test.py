@@ -96,7 +96,7 @@ for event in longpoll.listen():
                 # Сохраняем в избранное.
                 add_favorite_user(session, pipl)
                 # Сообщаем пользователю.
-                write_message(vk_session, peer_id, f'{pipl[0]} сохранили в спимок избранных.', attachments=None, keyboard=None, upload_image=None)
+                write_message(vk_session, peer_id, f'{pipl[0]} сохранили в список избранных.', attachments=None, keyboard=None, upload_image=None)
                 # Создаем следующего.
                 next_pipl = get_next_pipl(pipl, list_of_potential)
                 # Если следующий есть, то выводим следующего.
@@ -130,6 +130,10 @@ for event in longpoll.listen():
                     buttons_instance.button_LIST(vk_session, sender)
 
             elif message_text == 'LIST':
+
+                list_ = view_favorites_users(session, peer_id)
+                print(list_)
+                write_message(vk_session, peer_id, f'{list_}', attachments=None, keyboard=None, upload_image=None)
 
                 # ВЫВЕСТИ СПИСОК СОХРАНЕННЫХ
                 # # Если в списке что то есть:
