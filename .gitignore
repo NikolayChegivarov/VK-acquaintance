@@ -3,3 +3,5 @@
 /__pycache__/
 config.py
 VK_Token.py
+test.py
+VKinder_DB.py

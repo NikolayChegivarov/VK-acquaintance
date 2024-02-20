@@ -93,6 +93,7 @@ def search_users_info(criteria, search_count=10):
 
 def get_top_three_photos(user_id, vk_user):
     """Функция получения трех фотографий пользователя с наибольшим количеством лайков"""
+    print('Листаем фоточки.')
 
     # Получаем все фотографии из альбома профиля
     photos = vk_user.photos.get(owner_id=user_id, album_id='profile')

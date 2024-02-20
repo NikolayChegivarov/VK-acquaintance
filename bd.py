@@ -3,54 +3,91 @@ from sqlalchemy.orm import sessionmaker
 from models import *
 from config import user, password, name_database
 
-Base = declarative_base()
-
 DSN = f"postgresql://{user}:{password}@localhost:5432/{name_database}"
 engine = create_engine(DSN)
 Session = sessionmaker(bind=engine)
 session = Session()
-import logging
 
-logging.basicConfig()
-logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+# Журнал sqlalchemy.
+# import logging
+# logging.basicConfig()
+# logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
-def test_connection():
-    """Функция для тестирования подключения"""
-    print('1')
+def test_connection(session):
+    """Функция для тестирования подключения."""
     try:
-        print('2')
-        with engine.connect() as connection:
+        with session.bind.connect() as connection:
             result = connection.execute(text("SELECT version();"))
             version = result.scalar()
             print(f"Database version: {version}")
             return True
     except Exception as e:
-        print('3')
         print(f"Connection test failed: {e}")
         return False
-# test_connection()
+test_connection(session)
 
-def create_schema(engine, schema_name):
-    """Создание схемы pretenders в бд"""
-    with engine.connect() as connection:
-        connection.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
-create_schema(engine, 'pretenders')
-
-def create_tables(engine):
-    Base.metadata.drop_all(engine)
-    Base.metadata.create_all(engine)
-create_tables(engine)
-
-def add_favorite_user(pipl):
-    session = Session()
+def create_schema(session, schema_name):
+    """Создание схемы pretenders в бд."""
     try:
-        name = pipl[0]
-        link = pipl[1]
-        vk_user = pipl[2]
+        with session.begin():
+            session.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
+            session.commit()
+            print('Создается схема.')
+    except Exception as e:
+        print(f"Error creating schema: {e}")
+    finally:
+        session.close()
+
+def create_tables(session):
+    """Создание всех таблиц."""
+    try:
+        # Устанавливаю путь поиска для схемы 'pretenders'.
+        session.execute(text("SET search_path TO pretenders;"))
+        # reflect подтягивает все из схемы, таким образом удалиться всё,
+        # а не только то что есть в метаданных.
+        Base.metadata.reflect(bind=engine)
+        Base.metadata.drop_all(bind=session.bind)
+        Base.metadata.create_all(bind=session.bind)
+        session.commit()
+        print('Стираем таблицы если есть, создаем новые.')
+    except Exception as e:
+        print(f"Error creating tables: {e}")
+        raise
+    finally:
+        session.close()
+
+# Создание схемы и таблиц.
+create_schema(session, 'pretenders')
+create_tables(session)
+
+def add_all(session, list_of_potential):
+    """Функция добавляет всех претендентов."""
+    print('Всех на карандашь.')
+    for pipl in list_of_potential:
+        try:
+            name = pipl[0]
+            link = pipl[1]
+            vk_id = pipl[2]
+            favorite_user_data = Users(
+                name=name,
+                link=link,
+                vk_id=vk_id,
+            )
+            session.add(favorite_user_data)
+            session.commit()
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            session.rollback()
+        finally:
+            session.close()
+
+def add_favorite_user(session, pipl):
+    """Функция добавляет избранных."""
+    print(f'Добавили {pipl[0]} в избранное.')
+    try:
+        vk_id = pipl[2]
         favorite_user_data = Favorite_users(
-            name=name,
-            link=link,
-            vk_user=vk_user,
+            vk_id=vk_id
         )
         session.add(favorite_user_data)
         session.commit()
@@ -60,17 +97,9 @@ def add_favorite_user(pipl):
     finally:
         session.close()
 
-def view_favorites_users(user_id):
-    session = Session()
-    results = session.query(Favorite_users).filter(Favorite_users.vk_user == user_id).all()
-    result = []
-    for res in results:
-        result.append([res.name, res.link, res.vk_user])
-    session.close()
-    return result
-
-def add_black_list(pipl):
-    session = Session()
+def add_black_list(session, pipl):
+    """Добавление в черный список."""
+    print('Добавили pipl[0] в чс.')
     try:
         vk_user = pipl[2]
         black_list_user_data = Black_list(
@@ -83,5 +112,13 @@ def add_black_list(pipl):
     finally:
         session.close()
 
-session.commit()
-session.close()
+def view_favorites_users(session, user_id):
+    """Просмотр избранных пользователей."""
+    print('Вывели список.')
+    results = session.query(Favorite_users).filter(Favorite_users.vk_user == user_id).all()
+    result = []
+    for res in results:
+        result.append([res.name, res.link, res.vk_user])
+    session.commit()
+    session.close()
+    return result

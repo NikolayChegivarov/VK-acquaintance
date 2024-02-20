@@ -27,6 +27,13 @@ class Buttons:
         self.set_message_text("Если хочешь добавить человека в список избранных нажми 'SAVE'. Если хочешь перейти к следующему человеку, нажми 'NEXT'. Если хочешь вывести список избранных нажми 'LIST'.")
         self.send_message(vk_session, user_id, keyboard)
 
+    def button_LIST(self, vk_session, user_id):
+        """Кнопки со своим функционалом"""
+        keyboard = VkKeyboard(one_time=self.one_time)
+        keyboard.add_button('LIST', color=VkKeyboardColor.SECONDARY)  # Белая
+        self.set_message_text("В списке больше нет людей. Что бы вывести список избранных нажмите 'list'")
+        self.send_message(vk_session, user_id, keyboard)
+
     def send_message(self, vk_session, user_id, keyboard):
         """Для интеграции метода сообщения в кнопку, с текстом в качестве аргумента"""
         attachments = []  # При необходимости заменю реальными вложениями.
