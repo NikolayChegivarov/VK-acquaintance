@@ -3,7 +3,7 @@ import requests
 URL = 'https://api.vk.com/method/'
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-
+from tqdm import tqdm
 
 def get_city_id_by_name(city_name, vk_user):
     """Функция конвертирует название города в его вк идентификатор.
@@ -53,6 +53,8 @@ def get_user_info(vk_user, user_id=None, vk_session=None, peer_id=None):
     return result
 
 def age_range(user_state):
+    """Функция предназначена для установки
+    диапазона по возрасту."""
     age = user_state['criteria']['age']
     gender = user_state['criteria']['gender']
     city_id = user_state['criteria']['city']
@@ -130,7 +132,8 @@ def get_top_three_photos(user_id, vk_user):
     photos_likes = {}
 
     # Проходимся по всем фотографиям и считаем количество лайков
-    for photo in photos['items']:
+    # for photo in photos['items']:
+    for photo in tqdm(photos['items'], desc="Загрузка фотографий", unit="фото"):
         photo_id = photo['id']
         owner_id = photo['owner_id']
         likes_info = vk_user.likes.getList(type='photo', owner_id=owner_id, item_id=photo_id)
@@ -150,4 +153,3 @@ def get_next_pipl(pipl, list_of_potential):
         return list_of_potential[current_index + 1]
     else:
         return None
-
