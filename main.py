@@ -1,7 +1,7 @@
 import vk_api
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
-from config import TOKEN, GROUP_ID, user_token
-from user_info import get_user_info, search_users_info, get_top_three_photos, get_next_pipl, get_city_id_by_name, age_range
+from config import TOKEN, GROUP_ID
+from user_info import *
 from start_button import Buttons
 from write_message import write_message
 from bd import *
@@ -72,7 +72,6 @@ for event in longpoll.listen():
 
         status = user_states.get(sender, {}).get('status', None)
 
-
         # ЕСЛИ В КРИТЕРИЯХ НЕ ХВАТАЕТ ГОРОДА ИЛИ ДАТЫ РОЖДЕНИЯ.
 
         # Если есть диапазон нажимаем старт
@@ -84,7 +83,7 @@ for event in longpoll.listen():
             city_name = message_text
             city_identifier = get_city_id_by_name(city_name, vk_user)
             criteria['city'] = city_identifier
-            del(user_states[sender]['status'])
+            del (user_states[sender]['status'])
             print(f"С городом {user_states}")
 
         # Обработка сообщения как ответ на запрос о дате рождения
@@ -92,9 +91,8 @@ for event in longpoll.listen():
             print('меняет дату')
             date_of_birth = message_text
             criteria['age'] = date_of_birth
-            del(user_states[sender]['status'])
+            del (user_states[sender]['status'])
             print(f'С датой {user_states[sender]}')
-
 
         # ПРОВЕРКА НА ОТСУТСТВИЕ ГОРОДА ИЛИ ДАТЫ РОЖДЕНИЯ.
         # Если статус отсутствует
@@ -109,7 +107,6 @@ for event in longpoll.listen():
                 user_states.setdefault(sender, {})
                 user_states[sender]['status'] = 'criteria_completed'
                 print(f'Критерии укомплектованы: {user_states}')
-
 
         # УСТАНАВЛИВАЕМ ДИАПАЗОН И СРАЗУ ОТПРАВЛЯЕМ КНОПКУ СТАРТ
         status = user_states.get(sender, {}).get('status', None)
@@ -127,7 +124,6 @@ for event in longpoll.listen():
                 start_message_sent[peer_id] = True
             user_states[sender]['status'] = 'criteria_with_range'
             print(f'Последний {user_states}')
-
 
         # КНОПКИ:
         if status == 'START':
@@ -147,9 +143,12 @@ for event in longpoll.listen():
                 if list_of_potential:
                     pipl = list_of_potential[0]
                     photos = get_top_three_photos(pipl[2], vk_user)
-                    write_message(vk_session, peer_id,
-                                  f'{pipl[3]} из {len(list_of_potential)} претендентов.\n{pipl[0]}. \nСылка на профиль: {pipl[1]}.',
-                                  attachments=photos)
+                    message = (
+                        f'{pipl[3]} из {len(list_of_potential)} претендентов.\n'
+                        f'{pipl[0]}. \n'
+                        f'Ссылка на профиль: {pipl[1]}.'
+                    )
+                    write_message(vk_session, peer_id, message, attachments=photos)
                     print('Первый пошел.')
 
                     # Отправляем клавиатуру "SAVE", "NEXT" и "LIST".
@@ -165,19 +164,20 @@ for event in longpoll.listen():
                 # Сохраняем в избранное.
                 add_favorite_user(session, pipl)
                 # Сообщаем пользователю.
-                write_message(vk_session, peer_id, f'{pipl[0]} сохранили в список избранных.', attachments=None, keyboard=None, upload_image=None)
+                message = f'{pipl[0]} сохранили в список избранных.'
+                write_message(vk_session, peer_id, message, attachments=None, keyboard=None, upload_image=None)
                 # Создаем следующего.
                 next_pipl = get_next_pipl(pipl, list_of_potential)
                 # Если следующий есть, то выводим следующего.
                 if next_pipl is not None:
                     pipl = next_pipl
                     photos = get_top_three_photos(pipl[2], vk_user)
-                    write_message(vk_session, peer_id,
-                                  f'{pipl[3]} из {len(list_of_potential)} претeндентов.\n{pipl[0]}. \nСылка на профиль: {pipl[1]}.',
-                                  attachments=photos)
+                    message = (f'{pipl[3]} из {len(list_of_potential)} претeндентов.'
+                               f'\n{pipl[0]}. \nСсылка на профиль: {pipl[1]}.')
+                    write_message(vk_session, peer_id, message, attachments=photos)
                     buttons_instance.button_SAVE_NEXT_LIST(vk_session, sender)
                 else:
-                    # В списке больше нет людей. Что бы вывести список избранных нажмите 'list')
+                    # В списке больше нет людей. Что бы вывести список избранных нажмите 'list'.
                     buttons_instance.button_LIST(vk_session, sender)
 
             elif message_text == 'NEXT':
@@ -190,12 +190,12 @@ for event in longpoll.listen():
                 if next_pipl is not None:
                     pipl = next_pipl
                     photos = get_top_three_photos(pipl[2], vk_user)
-                    write_message(vk_session, peer_id,
-                                  f'{pipl[3]} из {len(list_of_potential)} претeндентов.\n{pipl[0]}. \nСылка на профиль: {pipl[1]}.',
-                                  attachments=photos)
+                    message = (f'{pipl[3]} из {len(list_of_potential)} претeндентов.'
+                               f'\n{pipl[0]}. \nСсылка на профиль: {pipl[1]}.')
+                    write_message(vk_session, peer_id, message, attachments=photos)
                     buttons_instance.button_SAVE_NEXT_LIST(vk_session, sender)
                 else:
-                    # В списке больше нет людей. Что бы вывести список избранных нажмите 'list')
+                    # В списке больше нет людей. Что бы вывести список избранных нажмите 'list'.
                     buttons_instance.button_LIST(vk_session, sender)
 
             elif message_text == 'LIST':
@@ -203,7 +203,8 @@ for event in longpoll.listen():
                 list_favorites = view_favorites_users(session, peer_id, id_bot_user_)
                 print(f'Избранные: {list_favorites}')
                 # Отправляем этот список пользователю.
-                write_message(vk_session, peer_id, f'{list_favorites}', attachments=None, keyboard=None, upload_image=None)
+                message = f'{list_favorites}'
+                write_message(vk_session, peer_id, message, attachments=None, keyboard=None, upload_image=None)
                 buttons_instance.button_LIST_rejected_START(vk_session, sender)
                 pass
 
@@ -239,9 +240,10 @@ for event in longpoll.listen():
             'is_hidden': False,
             'peer_id': 23659472,
             'random_id': 0,
-            'text': 'олролр'},
+            'text': ''},
             'client_info': {
-                'button_actions': ['text', 'vkpay', 'open_app', 'location', 'open_link', 'callback', 'intent_subscribe', 'intent_unsubscribe'],
+                'button_actions': ['text', 'vkpay', 'open_app', 'location', 
+                'open_link', 'callback', 'intent_subscribe', 'intent_unsubscribe'],
                 'keyboard': True,
                 'inline_keyboard': True,
                 'carousel': True,
