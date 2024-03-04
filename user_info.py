@@ -1,9 +1,11 @@
 from config import user_token
-import requests
-URL = 'https://api.vk.com/method/'
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from tqdm import tqdm
+import requests
+from vk_api.exceptions import ApiError
+URL = 'https://api.vk.com/method/'
+
 
 def get_city_id_by_name(city_name, vk_user):
     """Функция конвертирует название города в его вк идентификатор.
@@ -16,7 +18,7 @@ def get_city_id_by_name(city_name, vk_user):
 
 def change_of_date(date_string, years):
     """Функция предназначена для прибавления или вычета лет к дате рождения пользователя.
-    Используется в функции get_user_info."""
+    Используется в функции age_range."""
     date_format = '%d.%m.%Y'
     try:
         date_obj = datetime.strptime(date_string, date_format)
@@ -101,7 +103,7 @@ def search_users_info(criteria, search_count=10):
         'v': '5.131',
         'sex': sex,
         'city': user_city,
-        'count': search_count,  # search_count это указывает на максимальное количество пользователей.
+        'count': search_count,  # search_count указывает на максимальное количество пользователей.
         'has_photo': 1,  # у которых есть фотографии в профиле
         'verified': 1,  # Пользователи, имеющие подтвержденный профиль, будут иметь значок верификации, и их профили будут более надежными.
         'is_closed': 0,  # Только открытые профили.
@@ -125,26 +127,32 @@ def search_users_info(criteria, search_count=10):
 def get_top_three_photos(user_id, vk_user):
     """Функция получения трех фотографий пользователя с наибольшим количеством лайков"""
     print('Листаем фоточки.')
+    try:
+        # Получаем все фотографии из альбома профиля
+        photos = vk_user.photos.get(owner_id=user_id, album_id='profile')
+        # Создаём словарь для хранения фотографий с их количеством лайков
+        photos_likes = {}
+        top_three_photos = []
+        # Проходимся по всем фотографиям и считаем количество лайков
+        for photo in tqdm(photos['items'], desc="Загрузка фотографий", unit="фото"):
 
-    # Получаем все фотографии из альбома профиля
-    photos = vk_user.photos.get(owner_id=user_id, album_id='profile')
-    # Создаём словарь для хранения фотографий с их количеством лайков
-    photos_likes = {}
-
-    # Проходимся по всем фотографиям и считаем количество лайков
-    # for photo in photos['items']:
-    for photo in tqdm(photos['items'], desc="Загрузка фотографий", unit="фото"):
-        photo_id = photo['id']
-        owner_id = photo['owner_id']
-        likes_info = vk_user.likes.getList(type='photo', owner_id=owner_id, item_id=photo_id)
-        likes_count = likes_info['count']
-        # кортеж с photo_id в качестве ключа вместо всего словаря фотографий
-        photos_likes[(photo_id)] = likes_count
-        # Сортируем фотографии по количеству лайков и возвращаем первые три
-        sorted_photos = sorted(photos_likes.items(), key=lambda x: x[1], reverse=True)
-        # Правильно форматируем строки для вложений
-        top_three_photos = ['photo{}_{}'.format(owner_id, photo_id) for photo_id, _ in sorted_photos[:3]]
-    return top_three_photos
+            photo_id = photo['id']
+            owner_id = photo['owner_id']
+            likes_info = vk_user.likes.getList(type='photo', owner_id=owner_id, item_id=photo_id)
+            likes_count = likes_info['count']
+            # кортеж с photo_id в качестве ключа вместо всего словаря фотографий
+            photos_likes[(photo_id)] = likes_count
+            # Сортируем фотографии по количеству лайков и возвращаем первые три
+            sorted_photos = sorted(photos_likes.items(), key=lambda x: x[1], reverse=True)
+            # Правильно форматируем строки для вложений
+            top_three_photos = ['photo{}_{}'.format(owner_id, photo_id) for photo_id, _ in sorted_photos[:3]]
+        return top_three_photos
+    except ApiError as e:
+        if e.code == 30:  # Профиль закрытый.
+            print(f"Профиль с идентификатором {user_id} является закрытым. Пропускаем.")
+            return []  # Вернуть пустой список или обработать при необходимости
+        else:
+            raise  # Повторно вызовем исключение, если это не проблема конфиденциальности профиля.
 
 def get_next_pipl(pipl, list_of_potential):
     """Функция для переключения на следующего потенциального партнера. """

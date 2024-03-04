@@ -49,32 +49,64 @@ def create_tables(session):
         Base.metadata.drop_all(bind=session.bind)
         Base.metadata.create_all(bind=session.bind)
         session.commit()
-        print('Стираем таблицы если есть, создаем новые.')
+        print('Не стираем таблицы если есть, создаем новые.')
     except Exception as e:
         print(f"Ошибка создания таблиц: {e}")
         raise
     finally:
         session.close()
 
-# Создание схемы и таблиц.
+# Создание схемы и таблицы.
 create_schema(session, 'pretenders')
 create_tables(session)
 
-def add_all(session, list_of_potential):
+def add_bot_users(session, sender, user_name):
+    """Функция добавляет пользователя бота
+    в таблицу bot_users."""
+    try:
+        bot_users_data = Bot_users(
+            id_vk_user=sender,
+            user_name=user_name
+        )
+        session.add(bot_users_data)
+        session.commit()
+        print('Пользователь бота добавлен в базу.')
+    except Exception as e:
+        print(f"Произошла ошибка: {e}")
+        session.rollback()
+    finally:
+        session.close()
+
+def id_bot_user(id_vk_user):
+    """Функция для получения id пользователя из таблицы пользователей.
+    Используется в функции add_all"""
+    bot_user = session.query(Bot_users).filter(Bot_users.id_vk_user == id_vk_user).first()
+    if bot_user:
+        return bot_user.id_bot_user
+    else:
+        print(f"Пользователь бота с id_vk_user={id_vk_user} не найден.")
+        return None
+
+def add_all(session, list_of_potential, id_vk_user):
     """Функция добавляет всех претендентов."""
     print('Всех на карандашь.')
     for pipl in list_of_potential:
         try:
+            vk_id = pipl[2]
             name = pipl[0]
             link = pipl[1]
-            vk_id = pipl[2]
-            favorite_user_data = Users(
-                name=name,
-                link=link,
-                vk_id=vk_id,
+
+            id_bot_user_ = id_bot_user(id_vk_user)
+
+            favorite_user_data = Users_potential(
+                id_bot_user=id_bot_user_,
+                id_vk_user=vk_id,
+                user_name=name,
+                link=link
             )
             session.add(favorite_user_data)
             session.commit()
+            print(f"Добавлен пользователь {name} с id_vk_user={vk_id}.")
         except Exception as e:
             print(f"Произошла ошибка: {e}")
             session.rollback()
@@ -83,14 +115,14 @@ def add_all(session, list_of_potential):
 
 def add_favorite_user(session, pipl):
     """Функция добавляет избранных."""
-    print(f'Добавили {pipl[0]} в избранное.')
     try:
         vk_id = pipl[2]
         favorite_user_data = Favorite_users(
-            vk_id=vk_id
+            id_vk_user=vk_id
         )
         session.add(favorite_user_data)
         session.commit()
+        print(f'Добавили {vk_id} в избранное.')
     except Exception as e:
         print(f"Произошла ошибка: {e}")
         session.rollback()
@@ -99,34 +131,34 @@ def add_favorite_user(session, pipl):
 
 def add_black_list(session, pipl):
     """Добавление в черный список."""
-    print('Добавили pipl[0] в чс.')
     try:
         vk_user = pipl[2]
         black_list_user_data = Black_list(
-            vk_user=vk_user)
+            id_vk_user=vk_user)
         session.add(black_list_user_data)
         session.commit()
+        print(f'Добавили {pipl[0]} в чс.')
     except Exception as e:
         print(f"Произошла ошибка: {e}")
         session.rollback()
     finally:
         session.close()
 
-
-def view_favorites_users(session, user_id):
+def view_favorites_users(session, user_id, id_bot_user):
     """Просмотр избранных пользователей."""
     print('Попытка список.')
-    # results = session.query(Favorite_users, Users).join(Users, Favorite_users.vk_id == Users.vk_id).filter(Users.user_id == user_id).all()
-    results = session.query(Users). \
-                            join(Favorite_users, Users.vk_id == Favorite_users.vk_id). \
-                            with_entities(Users.name, Users.link). \
-                            all()
-    print(f'результат {results}')
+    # Adjust the query to match the provided SQL structure
+    results = session.query(Users_potential.user_name, Users_potential.link).\
+        join(Bot_users, Bot_users.id_bot_user == Users_potential.id_bot_user).\
+        join(Favorite_users, Favorite_users.id_vk_user == Users_potential.id_vk_user).\
+        filter(Bot_users.id_bot_user == id_bot_user).\
+        all()
+    print(f'результат фовариты {results}')
     result = []
-    for name, link in results:
-        result.append([name, link])
+    for user_name, link in results:
+        result.append([user_name, link])
     if result:
-        formatted_result = '\n'.join(f"{name} - {link}" for name, link in result)
+        formatted_result = '\n'.join(f"{user_name} - {link}" for user_name, link in result)
         session.commit()
         session.close()
         return f"Ваши избранные:\n{formatted_result}"
@@ -134,3 +166,26 @@ def view_favorites_users(session, user_id):
         session.commit()
         session.close()
         return "Ваш список избранных пуст."
+
+def view_rejected_users(session, user_id, id_bot_user):
+    """Просмотр отклоненных пользователей."""
+    print('Попытка список.')
+    results = session.query(Users_potential.user_name, Users_potential.link).\
+        join(Bot_users, Bot_users.id_bot_user == Users_potential.id_bot_user).\
+        join(Black_list, Black_list.id_vk_user == Users_potential.id_vk_user).\
+        filter(Bot_users.id_bot_user == id_bot_user).\
+        all()
+    print(f'результат фавориты {results}')
+    result = []
+    for user_name, link in results:
+        result.append([user_name, link])
+    if result:
+        formatted_result = '\n'.join(f"{user_name} - {link}" for user_name, link in result)
+        session.commit()
+        session.close()
+        return f"Ваши избранные:\n{formatted_result}"
+    else:
+        session.commit()
+        session.close()
+        return "Ваш список избранных пуст."
+

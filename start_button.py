@@ -28,10 +28,20 @@ class Buttons:
         self.send_message(vk_session, user_id, keyboard)
 
     def button_LIST(self, vk_session, user_id):
-        """Кнопки со своим функционалом"""
+        """Кнопка для просмотра избранных."""
         keyboard = VkKeyboard(one_time=self.one_time)
         keyboard.add_button('LIST', color=VkKeyboardColor.SECONDARY)  # Белая
         self.set_message_text("В списке больше нет людей. Что бы вывести список избранных нажмите 'list'")
+        self.send_message(vk_session, user_id, keyboard)
+
+    def button_LIST_rejected_START(self, vk_session, user_id):
+        """Кнопка для просмотра отклоненных."""
+        keyboard = VkKeyboard(one_time=self.one_time)
+        keyboard.add_button('LIST_rejected', color=VkKeyboardColor.SECONDARY)  # Белая
+        keyboard.add_button('START', color=VkKeyboardColor.NEGATIVE)  # красная
+        self.set_message_text("Это все пользователи VK которых вы добавили в избранное."
+                              "При желании вывести список отклоненных пользователей, "
+                              "вы можете воспользоваться унопкой 'LIST_rejected'")
         self.send_message(vk_session, user_id, keyboard)
 
     def send_message(self, vk_session, user_id, keyboard):
