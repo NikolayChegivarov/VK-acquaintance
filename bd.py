@@ -105,12 +105,12 @@ def add_all(session, list_of_potential, id_vk_user):
                 link=link
             )
             session.add(favorite_user_data)
-            session.commit()
             print(f"Добавлен пользователь {name} с id_vk_user={vk_id}.")
         except Exception as e:
             print(f"Произошла ошибка: {e}")
             session.rollback()
         finally:
+            session.commit()
             session.close()
 
 def add_favorite_user(session, pipl):
@@ -121,12 +121,12 @@ def add_favorite_user(session, pipl):
             id_vk_user=vk_id
         )
         session.add(favorite_user_data)
-        session.commit()
         print(f'Добавили {vk_id} в избранное.')
     except Exception as e:
         print(f"Произошла ошибка: {e}")
         session.rollback()
     finally:
+        session.commit()
         session.close()
 
 def add_black_list(session, pipl):
@@ -136,18 +136,17 @@ def add_black_list(session, pipl):
         black_list_user_data = Black_list(
             id_vk_user=vk_user)
         session.add(black_list_user_data)
-        session.commit()
         print(f'Добавили {pipl[0]} в чс.')
     except Exception as e:
         print(f"Произошла ошибка: {e}")
         session.rollback()
     finally:
+        session.commit()
         session.close()
 
 def view_favorites_users(session, user_id, id_bot_user):
     """Просмотр избранных пользователей."""
     print('Попытка список.')
-    # Adjust the query to match the provided SQL structure
     results = session.query(Users_potential.user_name, Users_potential.link).\
         join(Bot_users, Bot_users.id_bot_user == Users_potential.id_bot_user).\
         join(Favorite_users, Favorite_users.id_vk_user == Users_potential.id_vk_user).\
@@ -183,9 +182,9 @@ def view_rejected_users(session, user_id, id_bot_user):
         formatted_result = '\n'.join(f"{user_name} - {link}" for user_name, link in result)
         session.commit()
         session.close()
-        return f"Ваши избранные:\n{formatted_result}"
+        return f"Ваш список отклоненных пользователей:\n{formatted_result}"
     else:
         session.commit()
         session.close()
-        return "Ваш список избранных пуст."
+        return "Ваш список отклоненных пуст."
 

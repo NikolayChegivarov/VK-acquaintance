@@ -148,7 +148,7 @@ for event in longpoll.listen():
                     pipl = list_of_potential[0]
                     photos = get_top_three_photos(pipl[2], vk_user)
                     write_message(vk_session, peer_id,
-                                  f'{pipl[3]} из {len(list_of_potential)} претeндентов.\n{pipl[0]}. \nСылка на профиль: {pipl[1]}.',
+                                  f'{pipl[3]} из {len(list_of_potential)} претендентов.\n{pipl[0]}. \nСылка на профиль: {pipl[1]}.',
                                   attachments=photos)
                     print('Первый пошел.')
 
