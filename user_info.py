@@ -9,7 +9,7 @@ URL = 'https://api.vk.com/method/'
 
 def get_city_id_by_name(city_name, vk_user):
     """Функция конвертирует название города в его вк идентификатор.
-    Используется в модуле main.py/Обработка сообщения как ответ на запрос о городе."""
+    Используется в модуле interaction.py/Обработка сообщения как ответ на запрос о городе."""
     response = vk_user.database.getCities(q=city_name, count=1)
     if response['items']:
         return response['items'][0]['id']
@@ -161,3 +161,4 @@ def get_next_pipl(pipl, list_of_potential):
         return list_of_potential[current_index + 1]
     else:
         return None
+

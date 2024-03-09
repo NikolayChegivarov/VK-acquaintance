@@ -60,22 +60,31 @@ def create_tables(session):
 create_schema(session, 'pretenders')
 create_tables(session)
 
+from sqlalchemy.sql import exists
+
 def add_bot_users(session, sender, user_name):
-    """Функция добавляет пользователя бота
-    в таблицу bot_users."""
-    try:
-        bot_users_data = Bot_users(
-            id_vk_user=sender,
-            user_name=user_name
-        )
-        session.add(bot_users_data)
-        session.commit()
-        print('Пользователь бота добавлен в базу.')
-    except Exception as e:
-        print(f"Произошла ошибка: {e}")
-        session.rollback()
-    finally:
-        session.close()
+    """Функция добавляет пользователя бота в таблицу bot_users."""
+    # Проверяем, существует ли уже такой пользователь
+    user_exists = session.query(exists().where(Bot_users.id_vk_user == sender)).scalar()
+
+    if not user_exists:
+        try:
+            bot_users_data = Bot_users(
+                id_vk_user=sender,
+                user_name=user_name
+            )
+            session.add(bot_users_data)
+            session.commit()
+            print('Пользователь бота добавлен в базу.')
+        except Exception as e:
+            print(f"Произошла ошибка: {e}")
+            session.rollback()
+        finally:
+            session.close()
+    else:
+        print('Пользователь уже существует в базе.')
+
+
 
 def id_bot_user(id_vk_user):
     """Функция для получения id пользователя из таблицы пользователей.
@@ -105,7 +114,7 @@ def add_all(session, list_of_potential, id_vk_user):
                 link=link
             )
             session.add(favorite_user_data)
-            print(f"Добавлен пользователь {name} с id_vk_user={vk_id}.")
+            # print(f"Добавлен пользователь {name} с id_vk_user={vk_id}.")
         except Exception as e:
             print(f"Произошла ошибка: {e}")
             session.rollback()
@@ -174,7 +183,7 @@ def view_rejected_users(session, user_id, id_bot_user):
         join(Black_list, Black_list.id_vk_user == Users_potential.id_vk_user).\
         filter(Bot_users.id_bot_user == id_bot_user).\
         all()
-    print(f'результат фавориты {results}')
+    print(f'результат отклоненных {results}')
     result = []
     for user_name, link in results:
         result.append([user_name, link])
