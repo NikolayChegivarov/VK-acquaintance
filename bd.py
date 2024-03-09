@@ -2,6 +2,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from models import *
 from config import user, password, name_database
+from sqlalchemy.sql import exists
 
 DSN = f"postgresql://{user}:{password}@localhost:5432/{name_database}"
 engine = create_engine(DSN)
@@ -60,8 +61,6 @@ def create_tables(session):
 create_schema(session, 'pretenders')
 create_tables(session)
 
-from sqlalchemy.sql import exists
-
 def add_bot_users(session, sender, user_name):
     """Функция добавляет пользователя бота в таблицу bot_users."""
     # Проверяем, существует ли уже такой пользователь
@@ -83,8 +82,6 @@ def add_bot_users(session, sender, user_name):
             session.close()
     else:
         print('Пользователь уже существует в базе.')
-
-
 
 def id_bot_user(id_vk_user):
     """Функция для получения id пользователя из таблицы пользователей.
