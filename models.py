@@ -31,7 +31,7 @@ class UsersPotential(Base):
         return f'id_users_potential: {self.id_users_potential}, user_name: {self.user_name}'
 
 
-class Favorite_users(Base):
+class FavoriteUsers(Base):
     """Избранные пользователи."""
     __tablename__ = 'favorite_users'
     __table_args__ = {'schema': 'pretenders'}
@@ -42,7 +42,7 @@ class Favorite_users(Base):
         return f'id_fаvоrite_user: {self.id_fovarite_user}, id_vk_user: {self.id_vk_user}'
 
 
-class Black_list(Base):
+class BlackList(Base):
     """Отвергнутые пользователи."""
     __tablename__ = 'black_list'
     __table_args__ = {'schema': 'pretenders'}

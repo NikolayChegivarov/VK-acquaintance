@@ -119,7 +119,7 @@ class Bd:
         """Функция добавляет избранных."""
         try:
             vk_id = pipl[2]
-            favorite_user_data = Favorite_users(
+            favorite_user_data = FavoriteUsers(
                 id_vk_user=vk_id
             )
             self.db_session.add(favorite_user_data)
@@ -135,7 +135,7 @@ class Bd:
         """Добавление в черный список."""
         try:
             vk_user = pipl[2]
-            black_list_user_data = Black_list(
+            black_list_user_data = BlackList(
                 id_vk_user=vk_user)
             self.db_session.add(black_list_user_data)
             print(f'Добавили {pipl[0]} в чс.')
@@ -152,7 +152,7 @@ class Bd:
         id_bot_user = self.id_bot_user(sender)
         results = self.db_session.query(UsersPotential.user_name, UsersPotential.link). \
             join(BotUsers, BotUsers.id_bot_user == UsersPotential.id_bot_user). \
-            join(Favorite_users, Favorite_users.id_vk_user == UsersPotential.id_vk_user). \
+            join(FavoriteUsers, FavoriteUsers.id_vk_user == UsersPotential.id_vk_user). \
             filter(BotUsers.id_bot_user == id_bot_user). \
             all()
         print(f'результат фовариты {results}')
@@ -174,7 +174,7 @@ class Bd:
         id_bot_user = self.id_bot_user(sender)
         results = self.db_session.query(UsersPotential.user_name, UsersPotential.link). \
             join(BotUsers, BotUsers.id_bot_user == UsersPotential.id_bot_user). \
-            join(Black_list, Black_list.id_vk_user == UsersPotential.id_vk_user). \
+            join(BlackList, BlackList.id_vk_user == UsersPotential.id_vk_user). \
             filter(BotUsers.id_bot_user == id_bot_user). \
             all()
         result = []

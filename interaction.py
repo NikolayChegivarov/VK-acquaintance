@@ -128,7 +128,6 @@ class Interaction:
             return self.user_states
 
     def searching(self, message_text):
-        id_bot_user_ = Bd_instance.id_bot_user(self.sender)
         list_of_potential = self.user_states[self.sender]['list_of_potential']
         pipl = list_of_potential[0]
         if message_text == 'SAVE':
