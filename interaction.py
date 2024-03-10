@@ -52,7 +52,7 @@ class Interaction:
     def process_criteria_creation(self, message_text):
         status_2 = self.user_states.get(self.sender, {}).get('status2', None)
         if status_2 is None:
-            print("'status2' is not set for the user.")
+            print("'status2' отсутствует.")
             return
 
         # Получаем город.
@@ -176,7 +176,6 @@ class Interaction:
         elif message_text == 'LIST':
             # Выводим список избранных.
             list_favorites = Bd_instance.view_favorites_users(self.sender)
-            print(f'Избранные: {list_favorites}')
             # Отправляем этот список пользователю.
             message = f'{list_favorites}'
             write_message(self.vk_session, self.peer_id, message, attachments=None, keyboard=None, upload_image=None)

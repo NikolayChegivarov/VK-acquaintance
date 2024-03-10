@@ -4,7 +4,6 @@ from sqlalchemy.orm import declarative_base
 Base = declarative_base()
 
 
-# Bot_users
 class BotUsers(Base):
     """Пользователи бота."""
     __tablename__ = 'bot_users'

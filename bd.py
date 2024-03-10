@@ -39,7 +39,7 @@ class Bd:
             with self.db_session.begin():
                 self.db_session.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
                 self.db_session.commit()
-                print('Создается схема.')
+                print('Создали схему.')
         except Exception as e:
             print(f"Ошибка создания схемы: {e}")
         finally:
@@ -155,7 +155,6 @@ class Bd:
             join(FavoriteUsers, FavoriteUsers.id_vk_user == UsersPotential.id_vk_user). \
             filter(BotUsers.id_bot_user == id_bot_user). \
             all()
-        print(f'результат фовариты {results}')
         result = []
         for user_name, link in results:
             result.append([user_name, link])
