@@ -101,7 +101,7 @@ class Bd:
                 name = pipl[0]
                 link = pipl[1]
                 id_bot_user = self.id_bot_user(sender)
-                favorite_user_data = Users_potential(
+                favorite_user_data = UsersPotential(
                     id_bot_user=id_bot_user,
                     id_vk_user=vk_id,
                     user_name=name,
@@ -150,9 +150,9 @@ class Bd:
         """Просмотр избранных пользователей."""
         print('Попытка список.')
         id_bot_user = self.id_bot_user(sender)
-        results = self.db_session.query(Users_potential.user_name, Users_potential.link). \
-            join(BotUsers, BotUsers.id_bot_user == Users_potential.id_bot_user). \
-            join(Favorite_users, Favorite_users.id_vk_user == Users_potential.id_vk_user). \
+        results = self.db_session.query(UsersPotential.user_name, UsersPotential.link). \
+            join(BotUsers, BotUsers.id_bot_user == UsersPotential.id_bot_user). \
+            join(Favorite_users, Favorite_users.id_vk_user == UsersPotential.id_vk_user). \
             filter(BotUsers.id_bot_user == id_bot_user). \
             all()
         print(f'результат фовариты {results}')
@@ -172,9 +172,9 @@ class Bd:
     def view_rejected_users(self, sender):
         """Просмотр отклоненных пользователей."""
         id_bot_user = self.id_bot_user(sender)
-        results = self.db_session.query(Users_potential.user_name, Users_potential.link). \
-            join(BotUsers, BotUsers.id_bot_user == Users_potential.id_bot_user). \
-            join(Black_list, Black_list.id_vk_user == Users_potential.id_vk_user). \
+        results = self.db_session.query(UsersPotential.user_name, UsersPotential.link). \
+            join(BotUsers, BotUsers.id_bot_user == UsersPotential.id_bot_user). \
+            join(Black_list, Black_list.id_vk_user == UsersPotential.id_vk_user). \
             filter(BotUsers.id_bot_user == id_bot_user). \
             all()
         result = []

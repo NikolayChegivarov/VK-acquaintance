@@ -17,7 +17,7 @@ class BotUsers(Base):
         return f'id_bot_user: {self.id_bot_user}, user_name: {self.user_name}'
 
 
-class Users_potential(Base):
+class UsersPotential(Base):
     """Все потенциальные партнеры найденные по критериям юзера бота."""
     __tablename__ = 'users_potential'
     __table_args__ = {'schema': 'pretenders'}
