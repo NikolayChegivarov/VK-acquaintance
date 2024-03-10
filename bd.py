@@ -7,190 +7,188 @@ from sqlalchemy.sql import exists
 DSN = f"postgresql://{user}:{password}@localhost:5432/{name_database}"
 engine = create_engine(DSN)
 Session = sessionmaker(bind=engine)
-session = Session()
+db_session = Session()
 
 # Журнал sqlalchemy для пошагового просмотра и выявления проблем
 # import logging
 # logging.basicConfig()
 # logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
-def test_connection(session):
-    """Функция для тестирования подключения."""
-    try:
-        with session.bind.connect() as connection:
-            result = connection.execute(text("SELECT version();"))
-            version = result.scalar()
-            print(f"Версия базы данных: {version}")
-            return True
-    except Exception as e:
-        print(f"Проверка соединения не удалась: {e}")
-        return False
-test_connection(session)
 
-def create_schema(session, schema_name):
-    """Создание схемы pretenders в бд."""
-    try:
-        with session.begin():
-            session.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
-            session.commit()
-            print('Создается схема.')
-    except Exception as e:
-        print(f"Ошибка создания схемы: {e}")
-    finally:
-        session.close()
+class Bd:
 
-def create_tables(session):
-    """Создание всех таблиц."""
-    try:
-        # Устанавливаю путь поиска для схемы 'pretenders'.
-        session.execute(text("SET search_path TO pretenders;"))
-        # reflect подтягивает все из схемы, таким образом удалиться всё,
-        # а не только то что есть в метаданных.
-        Base.metadata.reflect(bind=engine)
-        Base.metadata.drop_all(bind=session.bind)
-        Base.metadata.create_all(bind=session.bind)
-        session.commit()
-        print('Не стираем таблицы если есть, создаем новые.')
-    except Exception as e:
-        print(f"Ошибка создания таблиц: {e}")
-        raise
-    finally:
-        session.close()
+    def __init__(self, db_session_):
+        """Инициализируем class interaction."""
+        self.db_session = db_session_
 
-# Создание схемы и таблицы.
-create_schema(session, 'pretenders')
-create_tables(session)
-
-def add_bot_users(session, sender, user_name):
-    """Функция добавляет пользователя бота в таблицу bot_users."""
-    # Проверяем, существует ли уже такой пользователь
-    user_exists = session.query(exists().where(Bot_users.id_vk_user == sender)).scalar()
-
-    if not user_exists:
+    def test_connection(self):
+        """Функция для тестирования подключения."""
         try:
-            bot_users_data = Bot_users(
-                id_vk_user=sender,
-                user_name=user_name
-            )
-            session.add(bot_users_data)
-            session.commit()
-            print('Пользователь бота добавлен в базу.')
+            with self.db_session.bind.connect() as connection:
+                result = connection.execute(text("SELECT version();"))
+                version = result.scalar()
+                print(f"Версия базы данных: {version}")
+                return True
         except Exception as e:
-            print(f"Произошла ошибка: {e}")
-            session.rollback()
+            print(f"Проверка соединения не удалась: {e}")
+            return False
+
+    def create_schema(self, schema_name):
+        """Создание схемы pretenders в бд."""
+        try:
+            with self.db_session.begin():
+                self.db_session.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
+                self.db_session.commit()
+                print('Создается схема.')
+        except Exception as e:
+            print(f"Ошибка создания схемы: {e}")
         finally:
-            session.close()
-    else:
-        print('Пользователь уже существует в базе.')
+            self.db_session.close()
 
-def id_bot_user(id_vk_user):
-    """Функция для получения id пользователя из таблицы пользователей.
-    Используется в функции add_all"""
-    bot_user = session.query(Bot_users).filter(Bot_users.id_vk_user == id_vk_user).first()
-    if bot_user:
-        return bot_user.id_bot_user
-    else:
-        print(f"Пользователь бота с id_vk_user={id_vk_user} не найден.")
-        return None
+    def create_tables(self):
+        """Создание всех таблиц."""
+        try:
+            self.db_session.execute(text("SET search_path TO pretenders;"))
+            Base.metadata.reflect(bind=engine)
+            Base.metadata.drop_all(bind=self.db_session.bind)
+            Base.metadata.create_all(bind=self.db_session.bind)
+            self.db_session.commit()
+            print('Стираем таблицы если есть, создаем новые.')
+        except Exception as e:
+            print(f"Ошибка создания таблиц: {e}")
+            raise
+        finally:
+            self.db_session.close()
 
-def add_all(session, list_of_potential, id_vk_user):
-    """Функция добавляет всех претендентов."""
-    print('Всех на карандашь.')
-    for pipl in list_of_potential:
+    def add_bot_users(self, sender, user_name):
+        """Функция добавляет пользователя бота в таблицу bot_users.
+        Используется в process_user_info_request"""
+        user_exists = self.db_session.query(exists().where(Bot_users.id_vk_user == sender)).scalar()
+
+        if not user_exists:
+            try:
+                bot_users_data = Bot_users(
+                    id_vk_user=sender,
+                    user_name=user_name
+                )
+                self.db_session.add(bot_users_data)
+                self.db_session.commit()
+                print('Пользователь бота добавлен в базу.')
+            except Exception as e:
+                print(f"Произошла ошибка: {e}")
+                self.db_session.rollback()
+            finally:
+                self.db_session.close()
+        else:
+            print('Пользователь уже существует в базе.')
+
+    def id_bot_user(self, sender):
+        """Функция для получения id пользователя из таблицы пользователей."""
+        bot_user = self.db_session.query(Bot_users).filter(Bot_users.id_vk_user == sender).first()
+        if bot_user:
+            return bot_user.id_bot_user
+        else:
+            print(f"Пользователь бота с id_vk_user={sender} не найден.")
+            return None
+
+    def add_all(self, list_of_potential, sender):
+        """Функция добавляет всех претендентов."""
+        print('Всех на карандаш.')
+        for pipl in list_of_potential:
+            print(f'пипл {pipl}')
+            try:
+                vk_id = pipl[2]
+                name = pipl[0]
+                link = pipl[1]
+
+                id_bot_user_ = self.id_bot_user(sender)
+                print(f'id_bot_user_ {id_bot_user_}')
+
+                favorite_user_data = Users_potential(
+                    id_bot_user=id_bot_user_,
+                    id_vk_user=vk_id,
+                    user_name=name,
+                    link=link
+                )
+                self.db_session.add(favorite_user_data)
+            except Exception as e:
+                print(f"Произошла ошибка: {e}")
+                self.db_session.rollback()
+            finally:
+                self.db_session.commit()
+                self.db_session.close()
+
+    def add_favorite_user(self, pipl):
+        """Функция добавляет избранных."""
         try:
             vk_id = pipl[2]
-            name = pipl[0]
-            link = pipl[1]
-
-            id_bot_user_ = id_bot_user(id_vk_user)
-
-            favorite_user_data = Users_potential(
-                id_bot_user=id_bot_user_,
-                id_vk_user=vk_id,
-                user_name=name,
-                link=link
+            favorite_user_data = Favorite_users(
+                id_vk_user=vk_id
             )
-            session.add(favorite_user_data)
-            # print(f"Добавлен пользователь {name} с id_vk_user={vk_id}.")
+            self.db_session.add(favorite_user_data)
+            print(f'Добавили {vk_id} в избранное.')
         except Exception as e:
             print(f"Произошла ошибка: {e}")
-            session.rollback()
+            self.db_session.rollback()
         finally:
-            session.commit()
-            session.close()
+            self.db_session.commit()
+            self.db_session.close()
 
-def add_favorite_user(session, pipl):
-    """Функция добавляет избранных."""
-    try:
-        vk_id = pipl[2]
-        favorite_user_data = Favorite_users(
-            id_vk_user=vk_id
-        )
-        session.add(favorite_user_data)
-        print(f'Добавили {vk_id} в избранное.')
-    except Exception as e:
-        print(f"Произошла ошибка: {e}")
-        session.rollback()
-    finally:
-        session.commit()
-        session.close()
+    def add_black_list(self, pipl):
+        """Добавление в черный список."""
+        try:
+            vk_user = pipl[2]
+            black_list_user_data = Black_list(
+                id_vk_user=vk_user)
+            self.db_session.add(black_list_user_data)
+            print(f'Добавили {pipl[0]} в чс.')
+        except Exception as e:
+            print(f"Произошла ошибка: {e}")
+            self.db_session.rollback()
+        finally:
+            self.db_session.commit()
+            self.db_session.close()
 
-def add_black_list(session, pipl):
-    """Добавление в черный список."""
-    try:
-        vk_user = pipl[2]
-        black_list_user_data = Black_list(
-            id_vk_user=vk_user)
-        session.add(black_list_user_data)
-        print(f'Добавили {pipl[0]} в чс.')
-    except Exception as e:
-        print(f"Произошла ошибка: {e}")
-        session.rollback()
-    finally:
-        session.commit()
-        session.close()
+    def view_favorites_users(self, user_id, id_bot_user):
+        """Просмотр избранных пользователей."""
+        print('Попытка список.')
+        results = self.db_session.query(Users_potential.user_name, Users_potential.link). \
+            join(Bot_users, Bot_users.id_bot_user == Users_potential.id_bot_user). \
+            join(Favorite_users, Favorite_users.id_vk_user == Users_potential.id_vk_user). \
+            filter(Bot_users.id_bot_user == id_bot_user). \
+            all()
+        print(f'результат фовариты {results}')
+        result = []
+        for user_name, link in results:
+            result.append([user_name, link])
+        if result:
+            formatted_result = '\n'.join(f"{user_name} - {link}" for user_name, link in result)
+            self.db_session.commit()
+            self.db_session.close()
+            return f"Ваши избранные:\n{formatted_result}"
+        else:
+            self.db_session.commit()
+            self.db_session.close()
+            return "Ваш список избранных пуст."
 
-def view_favorites_users(session, user_id, id_bot_user):
-    """Просмотр избранных пользователей."""
-    print('Попытка список.')
-    results = session.query(Users_potential.user_name, Users_potential.link).\
-        join(Bot_users, Bot_users.id_bot_user == Users_potential.id_bot_user).\
-        join(Favorite_users, Favorite_users.id_vk_user == Users_potential.id_vk_user).\
-        filter(Bot_users.id_bot_user == id_bot_user).\
-        all()
-    print(f'результат фовариты {results}')
-    result = []
-    for user_name, link in results:
-        result.append([user_name, link])
-    if result:
-        formatted_result = '\n'.join(f"{user_name} - {link}" for user_name, link in result)
-        session.commit()
-        session.close()
-        return f"Ваши избранные:\n{formatted_result}"
-    else:
-        session.commit()
-        session.close()
-        return "Ваш список избранных пуст."
-
-def view_rejected_users(session, user_id, id_bot_user):
-    """Просмотр отклоненных пользователей."""
-    print('Попытка список.')
-    results = session.query(Users_potential.user_name, Users_potential.link).\
-        join(Bot_users, Bot_users.id_bot_user == Users_potential.id_bot_user).\
-        join(Black_list, Black_list.id_vk_user == Users_potential.id_vk_user).\
-        filter(Bot_users.id_bot_user == id_bot_user).\
-        all()
-    print(f'результат отклоненных {results}')
-    result = []
-    for user_name, link in results:
-        result.append([user_name, link])
-    if result:
-        formatted_result = '\n'.join(f"{user_name} - {link}" for user_name, link in result)
-        session.commit()
-        session.close()
-        return f"Ваш список отклоненных пользователей:\n{formatted_result}"
-    else:
-        session.commit()
-        session.close()
-        return "Ваш список отклоненных пуст."
-
+    def view_rejected_users(self, user_id, id_bot_user):
+        """Просмотр отклоненных пользователей."""
+        print('Попытка список.')
+        results = self.db_session.query(Users_potential.user_name, Users_potential.link). \
+            join(Bot_users, Bot_users.id_bot_user == Users_potential.id_bot_user). \
+            join(Black_list, Black_list.id_vk_user == Users_potential.id_vk_user). \
+            filter(Bot_users.id_bot_user == id_bot_user). \
+            all()
+        print(f'результат отклоненных {results}')
+        result = []
+        for user_name, link in results:
+            result.append([user_name, link])
+        if result:
+            formatted_result = '\n'.join(f"{user_name} - {link}" for user_name, link in result)
+            self.db_session.commit()
+            self.db_session.close()
+            return f"Ваш список отклоненных пользователей:\n{formatted_result}"
+        else:
+            self.db_session.commit()
+            self.db_session.close()
+            return "Ваш список отклоненных пуст."

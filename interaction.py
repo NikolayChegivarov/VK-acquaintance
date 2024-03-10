@@ -5,7 +5,13 @@ from bd import *
 
 # Создаем экземпляр класса Buttons.
 buttons_instance = Buttons(one_time=True)
+# Создаем экземпляр класса Bd.
+Bd_instance = Bd(db_session)
 
+Bd_instance.test_connection()
+# Создание схемы и таблицы.
+Bd_instance.create_schema('pretenders')
+Bd_instance.create_tables()
 
 class Interaction:
 
@@ -19,12 +25,12 @@ class Interaction:
         self.sender = sender
 
     # ЗАПРАШИВАЕМ ИНФОРМАЦИЮ О ПОЛЬЗОВАТЕЛЕ.
-    def process_user_info_request(self, session):
+    def process_user_info_request(self, db_session):
         print('ЗАПРАШИВАЕМ ИНФОРМАЦИЮ О ПОЛЬЗОВАТЕЛЕ')
         user_info = self.vk_user.users.get(user_ids=self.sender, fields='first_name,last_name')
         user_name = f"{user_info[0]['first_name']} {user_info[0]['last_name']}"
         self.user_states[self.sender] = {'user_name': user_name}
-        add_bot_users(session, self.sender, user_name)  # Добавляем пользователя в бд.
+        Bd_instance.add_bot_users(self.sender, user_name)
         self.user_states[self.sender]['status'] = 'Нужно получить критерии'
         print(f"данные о пользователе: {self.user_states}")
         return self.user_states
@@ -104,7 +110,7 @@ class Interaction:
         # Добавляем список потенциальных в user_states
         self.user_states[self.sender]['list_of_potential'] = list_of_potential
         # Записываем всех пользователей vk выбранных по критериям.
-        add_all(session, list_of_potential, self.sender)
+        Bd_instance.add_all(list_of_potential, self.sender)
         # Отправляем информацию о первом кандидате пользователю.
         if list_of_potential:
             pipl = list_of_potential[0]
@@ -122,12 +128,12 @@ class Interaction:
             return self.user_states
 
     def searching(self, message_text):
-        id_bot_user_ = id_bot_user(self.sender)
+        id_bot_user_ = Bd_instance.id_bot_user(self.sender)
         list_of_potential = self.user_states[self.sender]['list_of_potential']
         pipl = list_of_potential[0]
         if message_text == 'SAVE':
             # Сохраняем в избранное.
-            add_favorite_user(session, pipl)
+            Bd_instance.add_favorite_user(pipl)
             # Сообщаем пользователю.
             message = f'{pipl[0]} сохранили в список избранных.'
             write_message(self.vk_session, self.peer_id, message, attachments=None, keyboard=None, upload_image=None)
@@ -150,7 +156,7 @@ class Interaction:
 
         elif message_text == 'NEXT':
             # Добавляем в чс.
-            add_black_list(session, pipl)
+            Bd_instance.add_black_list(pipl)
             # Создаем следующего.
             next_pipl = get_next_pipl(pipl, list_of_potential)
             # Если следующий есть, то выводим следующего.
@@ -170,7 +176,7 @@ class Interaction:
 
         elif message_text == 'LIST':
             # Выводим список избранных.
-            list_favorites = view_favorites_users(session, self.peer_id, id_bot_user_)
+            list_favorites = Bd_instance.view_favorites_users(self.peer_id, id_bot_user_)
             print(f'Избранные: {list_favorites}')
             # Отправляем этот список пользователю.
             message = f'{list_favorites}'
@@ -180,7 +186,7 @@ class Interaction:
 
         elif message_text == 'LIST_rejected':
             # Выводим список отклоненных.
-            list_rejected = view_rejected_users(session, self.peer_id, id_bot_user_)
+            list_rejected = Bd_instance.view_rejected_users(self.peer_id, id_bot_user_)
             print(f'Отклоненные: {list_rejected}')
             write_message(self.vk_session, self.peer_id, f'{list_rejected}', attachments=None, keyboard=None,
                           upload_image=None)
