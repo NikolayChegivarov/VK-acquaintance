@@ -63,11 +63,11 @@ class Bd:
     def add_bot_users(self, sender, user_name):
         """Функция добавляет пользователя бота в таблицу bot_users.
         Используется в process_user_info_request"""
-        user_exists = self.db_session.query(exists().where(Bot_users.id_vk_user == sender)).scalar()
+        user_exists = self.db_session.query(exists().where(BotUsers.id_vk_user == sender)).scalar()
 
         if not user_exists:
             try:
-                bot_users_data = Bot_users(
+                bot_users_data = BotUsers(
                     id_vk_user=sender,
                     user_name=user_name
                 )
@@ -83,8 +83,9 @@ class Bd:
             print('Пользователь уже существует в базе.')
 
     def id_bot_user(self, sender):
-        """Функция для получения id пользователя из таблицы пользователей."""
-        bot_user = self.db_session.query(Bot_users).filter(Bot_users.id_vk_user == sender).first()
+        """Функция для получения id пользователя из таблицы пользователей.
+        Используется в методе add_all."""
+        bot_user = self.db_session.query(BotUsers).filter(BotUsers.id_vk_user == sender).first()
         if bot_user:
             return bot_user.id_bot_user
         else:
@@ -95,17 +96,13 @@ class Bd:
         """Функция добавляет всех претендентов."""
         print('Всех на карандаш.')
         for pipl in list_of_potential:
-            print(f'пипл {pipl}')
             try:
                 vk_id = pipl[2]
                 name = pipl[0]
                 link = pipl[1]
-
-                id_bot_user_ = self.id_bot_user(sender)
-                print(f'id_bot_user_ {id_bot_user_}')
-
+                id_bot_user = self.id_bot_user(sender)
                 favorite_user_data = Users_potential(
-                    id_bot_user=id_bot_user_,
+                    id_bot_user=id_bot_user,
                     id_vk_user=vk_id,
                     user_name=name,
                     link=link
@@ -149,13 +146,14 @@ class Bd:
             self.db_session.commit()
             self.db_session.close()
 
-    def view_favorites_users(self, user_id, id_bot_user):
+    def view_favorites_users(self, sender):
         """Просмотр избранных пользователей."""
         print('Попытка список.')
+        id_bot_user = self.id_bot_user(sender)
         results = self.db_session.query(Users_potential.user_name, Users_potential.link). \
-            join(Bot_users, Bot_users.id_bot_user == Users_potential.id_bot_user). \
+            join(BotUsers, BotUsers.id_bot_user == Users_potential.id_bot_user). \
             join(Favorite_users, Favorite_users.id_vk_user == Users_potential.id_vk_user). \
-            filter(Bot_users.id_bot_user == id_bot_user). \
+            filter(BotUsers.id_bot_user == id_bot_user). \
             all()
         print(f'результат фовариты {results}')
         result = []
@@ -171,15 +169,14 @@ class Bd:
             self.db_session.close()
             return "Ваш список избранных пуст."
 
-    def view_rejected_users(self, user_id, id_bot_user):
+    def view_rejected_users(self, sender):
         """Просмотр отклоненных пользователей."""
-        print('Попытка список.')
+        id_bot_user = self.id_bot_user(sender)
         results = self.db_session.query(Users_potential.user_name, Users_potential.link). \
-            join(Bot_users, Bot_users.id_bot_user == Users_potential.id_bot_user). \
+            join(BotUsers, BotUsers.id_bot_user == Users_potential.id_bot_user). \
             join(Black_list, Black_list.id_vk_user == Users_potential.id_vk_user). \
-            filter(Bot_users.id_bot_user == id_bot_user). \
+            filter(BotUsers.id_bot_user == id_bot_user). \
             all()
-        print(f'результат отклоненных {results}')
         result = []
         for user_name, link in results:
             result.append([user_name, link])

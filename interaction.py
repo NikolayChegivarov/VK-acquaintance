@@ -13,6 +13,7 @@ Bd_instance.test_connection()
 Bd_instance.create_schema('pretenders')
 Bd_instance.create_tables()
 
+
 class Interaction:
 
     def __init__(self, event, user_states, vk_session, vk_user, peer_id, sender):
@@ -25,7 +26,7 @@ class Interaction:
         self.sender = sender
 
     # ЗАПРАШИВАЕМ ИНФОРМАЦИЮ О ПОЛЬЗОВАТЕЛЕ.
-    def process_user_info_request(self, db_session):
+    def process_user_info_request(self):
         print('ЗАПРАШИВАЕМ ИНФОРМАЦИЮ О ПОЛЬЗОВАТЕЛЕ')
         user_info = self.vk_user.users.get(user_ids=self.sender, fields='first_name,last_name')
         user_name = f"{user_info[0]['first_name']} {user_info[0]['last_name']}"
@@ -96,7 +97,6 @@ class Interaction:
     # УСТАНАВЛИВАЕМ ДИАПАЗОН И СРАЗУ ОТПРАВЛЯЕМ КНОПКУ СТАРТ.
     def set_range(self, buttons_instance):
         self.user_states[self.sender] = age_range(self.user_states[self.sender])
-        criteria = self.user_states[self.sender]['criteria']
         buttons_instance.button_start(self.vk_session, self.peer_id)
         self.user_states[self.sender]['status'] = 'START'
 
@@ -176,7 +176,7 @@ class Interaction:
 
         elif message_text == 'LIST':
             # Выводим список избранных.
-            list_favorites = Bd_instance.view_favorites_users(self.peer_id, id_bot_user_)
+            list_favorites = Bd_instance.view_favorites_users(self.sender)
             print(f'Избранные: {list_favorites}')
             # Отправляем этот список пользователю.
             message = f'{list_favorites}'
@@ -186,7 +186,7 @@ class Interaction:
 
         elif message_text == 'LIST_rejected':
             # Выводим список отклоненных.
-            list_rejected = Bd_instance.view_rejected_users(self.peer_id, id_bot_user_)
+            list_rejected = Bd_instance.view_rejected_users(self.sender)
             print(f'Отклоненные: {list_rejected}')
             write_message(self.vk_session, self.peer_id, f'{list_rejected}', attachments=None, keyboard=None,
                           upload_image=None)

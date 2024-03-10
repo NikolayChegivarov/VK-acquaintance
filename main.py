@@ -37,7 +37,7 @@ for event in longpoll.listen():
         status = user_states.get(sender, {}).get('status', None)
         # ЗАПРАШИВАЕМ ИНФОРМАЦИЮ О ПОЛЬЗОВАТЕЛЕ.
         if not user_states or not user_states.get(sender):
-            interaction_instance.process_user_info_request(db_session)
+            interaction_instance.process_user_info_request()
 
         # СОЗДАЕМ КРИТЕРИИ.
         status = user_states.get(sender, {}).get('status', None)
